@@ -1,0 +1,45 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: ["dev", "main"]
+
+jobs:
+  # TRABAJO 1: Verificar Calidad (CI)
+  check-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Esto verificará si hay errores de TypeScript o sintaxis
+      # IMPORTANTE: Necesitamos la variable de entorno aunque sea falsa para el build
+      - name: Build Check
+        run: npm run build
+        env:
+          # Usamos una dummy o la real si la pusiste en secretos
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'http://localhost:8000' }}
+
+  # TRABAJO 2: Desplegar a Vercel (CD)
+  deploy:
+    needs: check-quality # Solo se ejecuta si el paso anterior pasó
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod" # Esto fuerza que vaya a Producción

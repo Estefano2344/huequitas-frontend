@@ -20,9 +20,15 @@ export default function ChatPage() {
   useEffect(() => {
     if (!user) return;
 
+    // DEFINIR URL: Si existe la variable de entorno úsala, si no, usa localhost (para desarrollo)
+    const CHAT_URL = import.meta.env.VITE_CHAT_URL || 'http://localhost:3003';
+
+    console.log('🔌 Intentando conectar Socket a:', CHAT_URL);
+
     // Conectar a Socket.IO
-    const socket = io('http://localhost:3003', {
+    const socket = io(CHAT_URL, {
       withCredentials: true,
+      transports: ['websocket', 'polling'], // Forzar intentos por ambos métodos
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 5
@@ -34,7 +40,7 @@ export default function ChatPage() {
     socket.on('connect', () => {
       console.log('✅ Conectado al chat service');
       setLoading(false);
-      
+
       // Unirse a la sala "general"
       socket.emit('join-room', 'general');
     });
@@ -166,11 +172,10 @@ export default function ChatPage() {
                             </span>
                           </div>
                           <div
-                            className={`px-4 py-3 rounded-2xl ${
-                              isOwnMessage
+                            className={`px-4 py-3 rounded-2xl ${isOwnMessage
                                 ? 'bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-br-none'
                                 : 'bg-gray-100 text-gray-800 rounded-bl-none'
-                            }`}
+                              }`}
                           >
                             <p className="text-sm">{message.message}</p>
                           </div>
